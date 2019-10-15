@@ -1,0 +1,22 @@
+#!/bin/bash
+
+cd /home/yituadmin/cyw/images
+
+start_num=0
+
+for files in `ls |grep _secne.jpg`
+do
+   hname="_face.jpg"
+  # hname="_secne.jpg"
+   num=$start_num
+   filename=$num$hname
+   echo $filename
+   cp $files $filename
+#   ((start_num++))
+#    let start_num+=1
+#     start_num=`expr $start_num + 1`
+#      start_num=$[$start_num+1]
+       start_num=$(($start_num + 1))
+done
+
+echo $start_num
