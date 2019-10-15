@@ -1,0 +1,21 @@
+from pymongo import MongoClient, ReadPreference
+
+id = []
+def db_conn():
+    # client = MongoClient(['10.40.59.215:27017', '10.40.55.171:27017', '10.40.59.90:27017'])
+    client = MongoClient(host='10.40.59.215:27017')
+    db_auth = client.admin
+    db_auth.authenticate('admin', 'woshimima')
+    db = client.get_database('park', read_preference=ReadPreference.SECONDARY_PREFERRED)
+    collection = db.visit_record
+    myquery = {"identity":0}
+    for x in collection.find(myquery).limit(3):
+        print(type(x))
+        # id.append(x['tag_name'])
+        print(x)
+
+if __name__ == '__main__':
+    db_conn()
+    print(id)
+    new_id_list = str(id)
+    print(type(new_id_list))
