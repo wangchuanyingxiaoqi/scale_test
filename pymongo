@@ -1,0 +1,121 @@
+import argparse
+import json
+
+import requests
+import urllib3
+from pymongo import MongoClient, ReadPreference
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='添加监控任务')
+
+    parser.add_argument('--mongo_ip_port',help='mongodb master的地址',type=str,required=True)
+    # parser.add_argument('--mongo_port',help='mongodb端口',type=str,required=True,default='27017')
+
+
+    args = parser.parse_args()
+
+    return args
+
+def db_connet_device(mongo_ip_port,id_list,type):
+    '''
+
+    :param id_list: 传入空的设备id
+    :param type: 设备id
+    :return: id_list  that device's type equal 99
+    '''
+    client = MongoClient(host=mongo_ip_port)
+    db_auth = client.admin
+    db_auth.authenticate('admin','woshimima')
+    db = client.get_database('park',read_preference=ReadPreference.SECONDARY_PREFERRED)
+    collection = db.device_info
+    # type = str(type)
+    myquere = {"device_meta.type":type}
+    for x in collection.find(myquere,{'_id':0,'device_id':1}):
+        # print(x)
+        id_list.append(x['device_id'])
+    return id_list
+
+
+def db_connet_tag(mongo_ip_port,visible_identity,tag_list):
+    client = MongoClient(host=mongo_ip_port)
+    db_auth = client.admin
+    db_auth.authenticate('admin','woshimima')
+    db = client.get_database('park',read_preference=ReadPreference.SECONDARY_PREFERRED)
+    collection = db.tag
+    myquere = {"visible_identity":visible_identity}
+    for x in collection.find(myquere,{'_id':1,'tag_name':1}).limit(3):
+        # print(x['_id'])
+        a = str(x['_id'])
+        tag_list.append(a)
+    return  tag_list
+
+def login(server_ip,server_port):
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    login_url = "https://{}:{}/login".format(server_ip,server_port)
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    body = {
+        "password": "7f3fa48ca885678134842fa7456f3ece53a97f843b610185d900ac4e467c7490",
+        "username": "partner"
+    }
+    response_content = requests.post(login_url,data=json.dumps(body),headers=headers,verify=False).content
+    json_res_content = json.loads(response_content)
+    token = json_res_content['result']
+    return token
+
+if __name__ == '__main__':
+
+    args = parse_args()
+    #连接mongo,获取所有满足条件的设备id
+    id_list = []
+    tpye = int(2)
+    id_list_result = db_connet_device(args.mongo_ip_port,id_list,tpye)
+    print(id_list_result)
+
+   #连接mongo ,获取满足条件的tag
+    tag_list = []
+    visible_identity = 0
+    tag_list_result = db_connet_tag(args.mongo_ip_port,visible_identity,tag_list)
+    print(tag_list_result)
+
+    #登录园区，获取token
+    token = login("10.10.24.15","9812")
+    # print(token)
+
+    #准备创建监控任务
+    surveilance_url = "https://{}:{}/surveillance/policy".format("10.10.24.15","9812")
+    headers = {
+        'Content-Type':'application/json',
+        'Authorization':token
+    }
+    body ={
+      "custom_person_list": [
+      ],
+      "device_id_list": id_list_result,
+      "enabled":True,
+      "identity_list": [
+        "STAFF"
+      ],
+      "image_quality_threshold": None,
+      "name": "test_for_scale",
+      "remark": "所有设备",
+      "tag_id_list":tag_list_result,
+      "threshold":75,
+      "type": "2",
+      "valid_time": {
+        "end_date": "2019-10-15",
+        "end_time": "23:59:59",
+        "end_timestamp": 1571155199,
+        "mode": "2",
+        "start_date": "2019-10-14",
+        "start_time": "00:00:00",
+        "start_timestamp": 1570982400,
+        "valid_weekday": [
+        ]
+      }
+    }
+    response_con = requests.post(surveilance_url,data=json.dumps(body),headers=headers,verify=False).content
+    print(response_con)
+
