@@ -11,7 +11,8 @@ def parse_args():
 
     parser.add_argument('--mongo_ip_port',help='mongodb master的地址',type=str,required=True)
     # parser.add_argument('--mongo_port',help='mongodb端口',type=str,required=True,default='27017')
-
+    parser.add_argument('--park_ip',help='园区的ip',type=str,required=True)
+    parser.add_argument('--park_port',help='园区aip的端口',type=str,required=True)
 
     args = parser.parse_args()
 
@@ -81,11 +82,11 @@ if __name__ == '__main__':
     print(tag_list_result)
 
     #登录园区，获取token
-    token = login("10.10.24.15","9812")
+    token = login(args.park_ip,args.park_port)
     # print(token)
 
     #准备创建监控任务
-    surveilance_url = "https://{}:{}/surveillance/policy".format("10.10.24.15","9812")
+    surveilance_url = "https://{}:{}/surveillance/policy".format(args.park_ip,args.park_port)
     headers = {
         'Content-Type':'application/json',
         'Authorization':token
