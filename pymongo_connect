@@ -1,0 +1,26 @@
+import  pymongo
+from bson import ObjectId
+
+client = pymongo.MongoClient(host='10.40.59.215',port=27017)
+
+#auth
+client.admin.authenticate('admin','woshimima',mechanism='SCRAM-SHA-1')
+
+#连接数据库
+db = client.park
+
+#指定集合
+collection = db.tag
+tag_cyw = {
+    "_class": "com.ficus.face.product.park.core.tag.Tag",
+    "meta": {},
+    "tag_name": "cyw",
+    "count": 0,
+    "visible_identity": [
+        0
+    ],
+    "create_time": 0
+}
+
+result = collection.insert(tag_cyw)
+print(result)
